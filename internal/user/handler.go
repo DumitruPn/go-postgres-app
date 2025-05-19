@@ -1,16 +1,14 @@
-package handlers
+package user
 
 import (
 	"database/sql"
 	"encoding/json"
-	"go-postgres-app/internal/models"
-	"go-postgres-app/internal/repository"
 	"net/http"
 )
 
-func GetUsers(db *sql.DB) http.HandlerFunc {
+func GetUsersHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		users, err := repository.GetAllUsers(db)
+		users, err := GetAll(db)
 		if err != nil {
 			http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 			return
@@ -20,9 +18,9 @@ func GetUsers(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func CreateUser(db *sql.DB) http.HandlerFunc {
+func CreateUserHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user models.User
+		var user User
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			http.Error(w, "Invalid input", http.StatusBadRequest)
 			return
@@ -33,7 +31,7 @@ func CreateUser(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		id, err := repository.InsertUser(db, user)
+		id, err := Insert(db, user)
 		if err != nil {
 			http.Error(w, "Failed to insert user", http.StatusInternalServerError)
 			return

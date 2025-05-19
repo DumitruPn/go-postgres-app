@@ -39,7 +39,6 @@ func Connect() *sql.DB {
 		log.Fatal(err)
 	}
 
-	// Init table if needed
 	_, err = db.Exec(`
         CREATE SCHEMA IF NOT EXISTS data;
 

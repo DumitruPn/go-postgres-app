@@ -10,10 +10,8 @@ import (
 )
 
 func main() {
-	// Connect to DB
 	database := db.Connect()
 
-	// Setup routes with DB dependency
 	router := routes.Setup(database)
 
 	fmt.Println("🚀 Server running at http://localhost:8080")
