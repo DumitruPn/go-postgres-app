@@ -21,13 +21,8 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dtos := []Dto{}
-	for _, car := range cars {
-		dtos = append(dtos, AsDto(car))
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dtos)
+	json.NewEncoder(w).Encode(AsDtos(cars))
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {

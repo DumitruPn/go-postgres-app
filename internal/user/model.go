@@ -7,7 +7,7 @@ type User struct {
 	FirstName string
 	LastName  string
 	Age       int
-	Car       []car.Car
+	Cars      []car.Car
 }
 
 type CreateUserRequest struct {
@@ -21,7 +21,7 @@ type Dto struct {
 	FirstName string    `json:"firstName"`
 	LastName  string    `json:"lastName"`
 	Age       int       `json:"age"`
-	Car       []car.Dto `json:"car"`
+	Cars      []car.Dto `json:"cars"`
 }
 
 func AsDto(user User) Dto {
@@ -30,6 +30,14 @@ func AsDto(user User) Dto {
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Age:       user.Age,
-		Car:       []car.Dto{},
+		Cars:      car.AsDtos(user.Cars),
 	}
+}
+
+func AsDtos(users []User) []Dto {
+	dtos := []Dto{}
+	for _, user := range users {
+		dtos = append(dtos, AsDto(user))
+	}
+	return dtos
 }

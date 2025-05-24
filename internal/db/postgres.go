@@ -53,9 +53,15 @@ func Connect() *sql.DB {
             id SERIAL PRIMARY KEY,
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
-            age INT NOT NULL,
-            car_id INT REFERENCES data.cars(id)
+            age INT NOT NULL
         );
+
+		CREATE TABLE IF NOT EXISTS data.users_cars (
+		    user_id INT REFERENCES data.users(id),
+		    car_id INT REFERENCES data.cars(id),
+		    
+		    PRIMARY KEY (user_id, car_id)
+		)
     `)
 	if err != nil {
 		log.Fatal("Failed to ensure cars table:", err)

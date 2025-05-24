@@ -28,3 +28,11 @@ func AsDto(car Car) Dto {
 		Year:  car.Year,
 	}
 }
+
+func AsDtos(cars []Car) []Dto {
+	dtos := []Dto{}
+	for _, car := range cars {
+		dtos = append(dtos, AsDto(car))
+	}
+	return dtos
+}

@@ -2,36 +2,67 @@ package user
 
 import (
 	"database/sql"
+	"go-postgres-app/internal/car"
+	"maps"
+	"slices"
 )
 
 func GetAll(db *sql.DB) ([]User, error) {
-	rows, err := db.Query(`SELECT id, first_name, last_name, age FROM data.users`)
+	rows, err := db.Query(`
+		SELECT u.id, u.first_name, u.last_name, u.age, c.id, c.name, c.model, c.year FROM data.users u
+		INNER JOIN data.users_cars uc ON u.id = uc.user_id
+	  	INNER JOIN data.cars c ON uc.car_id = c.id
+	`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var users []User
+	users := map[int]User{}
 	for rows.Next() {
-		var user User
-		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Age); err != nil {
+		var u User
+		var c car.Car
+		if err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Age, &c.ID, &c.Name, &c.Model, &c.Year); err != nil {
 			return nil, err
 		}
-		users = append(users, user)
+		existing, ok := users[u.ID]
+		if ok {
+			existing.Cars = append(existing.Cars, c)
+			users[u.ID] = existing
+		} else {
+			u.Cars = []car.Car{c}
+			users[u.ID] = u
+		}
 	}
 
-	return users, nil
+	return slices.Collect(maps.Values(users)), nil
 }
 
 func Get(db *sql.DB, id string) (*User, error) {
-	row := db.QueryRow(`SELECT id, first_name, last_name, age FROM data.users where id = $1`, id)
-
-	var user User
-	if err := row.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Age); err != nil {
+	rows, err := db.Query(`
+		SELECT u.id, u.first_name, u.last_name, u.age, c.id, c.name, c.model, c.year FROM data.users u
+		INNER JOIN data.users_cars uc ON u.id = uc.user_id
+	  	INNER JOIN data.cars c ON uc.car_id = c.id
+		WHERE u.id = $1`,
+		id,
+	)
+	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	return &user, nil
+	var u User
+	var cars []car.Car
+	for rows.Next() {
+		var c car.Car
+		if err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Age, &c.ID, &c.Name, &c.Model, &c.Year); err != nil {
+			return nil, err
+		}
+		cars = append(cars, c)
+	}
+	u.Cars = cars
+
+	return &u, nil
 }
 
 func Insert(db *sql.DB, user CreateUserRequest) (int, error) {

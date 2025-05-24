@@ -40,7 +40,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		FirstName: input.FirstName,
 		LastName:  input.LastName,
 		Age:       input.Age,
-		Car:       []car.Dto{},
+		Cars:      []car.Dto{},
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -54,12 +54,9 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
 	}
-	dtos := []Dto{}
-	for _, user := range users {
-		dtos = append(dtos, AsDto(user))
-	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dtos)
+	json.NewEncoder(w).Encode(AsDtos(users))
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
