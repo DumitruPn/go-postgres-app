@@ -2,43 +2,25 @@ package routes
 
 import (
 	"database/sql"
+	"github.com/gorilla/mux"
 	"go-postgres-app/internal/car"
 	"go-postgres-app/internal/user"
 	"net/http"
 )
 
-func Setup(db *sql.DB) *http.ServeMux {
-	mux := http.NewServeMux()
+func Setup(db *sql.DB) *mux.Router {
+	router := mux.NewRouter()
 
-	registerCarRoutes(mux, db)
+	// user	endpoints
+	userHandler := user.NewHandler(db)
+	router.HandleFunc("/users", userHandler.GetAll).Methods(http.MethodGet)
+	router.HandleFunc("/users/{id}", userHandler.Get).Methods(http.MethodGet)
+	router.HandleFunc("/users", userHandler.Create).Methods(http.MethodPost)
 
-	registerUserRoutes(mux, db)
+	// car endpoints
+	carHandler := car.NewHandler(db)
+	router.HandleFunc("/cars", carHandler.GetAll).Methods(http.MethodGet)
+	router.HandleFunc("/cars", carHandler.Create).Methods(http.MethodPost)
 
-	return mux
-}
-
-func registerCarRoutes(mux *http.ServeMux, db *sql.DB) {
-	mux.HandleFunc("/cars", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			car.GetCarsHandler(db)(w, r)
-		case http.MethodPost:
-			car.CreateCarHandler(db)(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
-}
-
-func registerUserRoutes(mux *http.ServeMux, db *sql.DB) {
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			user.GetUsersHandler(db)(w, r)
-		case http.MethodPost:
-			user.CreateUserHandler(db)(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	return router
 }
