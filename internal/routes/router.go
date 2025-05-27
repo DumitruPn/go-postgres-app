@@ -13,14 +13,15 @@ func Setup(db *sql.DB) *mux.Router {
 
 	// user	endpoints
 	userHandler := user.NewHandler(db)
-	router.HandleFunc("/users", userHandler.GetAll).Methods(http.MethodGet)
-	router.HandleFunc("/users/{id}", userHandler.Get).Methods(http.MethodGet)
 	router.HandleFunc("/users", userHandler.Create).Methods(http.MethodPost)
+	router.HandleFunc("/users/{id}", userHandler.Get).Methods(http.MethodGet)
+	router.HandleFunc("/users", userHandler.GetAll).Methods(http.MethodGet)
 
 	// car endpoints
 	carHandler := car.NewHandler(db)
-	router.HandleFunc("/cars", carHandler.GetAll).Methods(http.MethodGet)
 	router.HandleFunc("/cars", carHandler.Create).Methods(http.MethodPost)
+	router.HandleFunc("/cars/{id}", carHandler.Get).Methods(http.MethodGet)
+	router.HandleFunc("/cars", carHandler.GetAll).Methods(http.MethodGet)
 
 	return router
 }

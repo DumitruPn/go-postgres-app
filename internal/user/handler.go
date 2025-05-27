@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
-	"go-postgres-app/internal/car"
+	"go-postgres-app/internal/users_cars"
 	"net/http"
 )
 
@@ -40,23 +40,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		FirstName: input.FirstName,
 		LastName:  input.LastName,
 		Age:       input.Age,
-		Cars:      []car.Dto{},
+		Cars:      []users_cars.DtoCarWithoutUser{},
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
-}
-
-func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := GetAll(h.db)
-	if err != nil {
-		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(AsDtos(users))
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
@@ -79,5 +68,16 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(AsDto(*u))
+	json.NewEncoder(w).Encode(AsDtoWithCars(*u))
+}
+
+func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
+	users, err := GetAll(h.db)
+	if err != nil {
+		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(AsDtosWithCars(users))
 }

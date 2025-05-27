@@ -1,13 +1,13 @@
 package user
 
-import "go-postgres-app/internal/car"
+import "go-postgres-app/internal/users_cars"
 
 type User struct {
 	ID        int
 	FirstName string
 	LastName  string
 	Age       int
-	Cars      []car.Car
+	Cars      []users_cars.CarWithoutUser
 }
 
 type CreateUserRequest struct {
@@ -17,27 +17,27 @@ type CreateUserRequest struct {
 }
 
 type Dto struct {
-	ID        int       `json:"id"`
-	FirstName string    `json:"firstName"`
-	LastName  string    `json:"lastName"`
-	Age       int       `json:"age"`
-	Cars      []car.Dto `json:"cars"`
+	ID        int                            `json:"id"`
+	FirstName string                         `json:"firstName"`
+	LastName  string                         `json:"lastName"`
+	Age       int                            `json:"age"`
+	Cars      []users_cars.DtoCarWithoutUser `json:"cars"`
 }
 
-func AsDto(user User) Dto {
+func AsDtoWithCars(user User) Dto {
 	return Dto{
 		ID:        user.ID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Age:       user.Age,
-		Cars:      car.AsDtos(user.Cars),
+		Cars:      users_cars.AsDtosWithoutUsers(user.Cars),
 	}
 }
 
-func AsDtos(users []User) []Dto {
+func AsDtosWithCars(users []User) []Dto {
 	dtos := []Dto{}
 	for _, user := range users {
-		dtos = append(dtos, AsDto(user))
+		dtos = append(dtos, AsDtoWithCars(user))
 	}
 	return dtos
 }
