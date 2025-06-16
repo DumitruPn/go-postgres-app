@@ -5,11 +5,16 @@ import (
 	"github.com/gorilla/mux"
 	"go-postgres-app/internal/car"
 	"go-postgres-app/internal/user"
+	"go-postgres-app/internal/ws"
+	"golang.org/x/net/websocket"
 	"net/http"
 )
 
 func Setup(db *sql.DB) *mux.Router {
 	router := mux.NewRouter()
+
+	// websockets
+	router.Handle("/ws", websocket.Handler(ws.Handler))
 
 	// user	endpoints
 	userHandler := user.NewHandler(db)
