@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"github.com/gorilla/mux"
 	"go-postgres-app/internal/car"
+	"go-postgres-app/internal/notification"
 	"go-postgres-app/internal/user"
-	"go-postgres-app/internal/ws"
-	"golang.org/x/net/websocket"
+	"go-postgres-app/internal/wsGorilla"
 	"net/http"
 )
 
@@ -14,7 +14,12 @@ func Setup(db *sql.DB) *mux.Router {
 	router := mux.NewRouter()
 
 	// websockets
-	router.Handle("/ws", websocket.Handler(ws.Handler))
+	wsHandler := wsGorilla.NewHandler(db)
+	router.HandleFunc("/ws", wsHandler.Handler)
+
+	// notification endpoints
+	notificationHandler := notification.NewHandler(db)
+	router.HandleFunc("/notification", notificationHandler.GetAll).Methods(http.MethodGet)
 
 	// user	endpoints
 	userHandler := user.NewHandler(db)

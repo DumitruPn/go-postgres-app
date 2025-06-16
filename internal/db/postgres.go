@@ -61,6 +61,11 @@ func Connect() *sql.DB {
 		    car_id INT REFERENCES data.cars(id),
 		    
 		    PRIMARY KEY (user_id, car_id)
+		);
+		
+		CREATE TABLE IF NOT EXISTS data.notifications (
+		    id SERIAL PRIMARY KEY,
+		    value TEXT NOT NULL
 		)
     `)
 	if err != nil {
