@@ -38,30 +38,94 @@ func (h *Handler) Handler(w http.ResponseWriter, r *http.Request) {
 	registerClient(conn)
 	defer unregisterClient(conn)
 
-	for {
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("Read error:", err)
-			break
+	// go func() { read() } ()  -------X--->
+	//								   |
+	//								   V
+	//                              channel
+	//                                 |
+	//								   V
+	// go func() { write() } () ----------->
+
+	log.Println("am ajuns")
+	messageChan := make(chan notification.Dto, 100)
+	readDone := make(chan bool, 1)
+	defer close(messageChan)
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	wg.Add(1)
+	go func(conn *websocket.Conn) {
+		defer wg.Done()
+		for {
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				log.Println("Read error:", err)
+				readDone <- true
+				break
+			}
+
+			input := notification.CreateNotificationRequest{Value: string(msg)}
+
+			id, err := notification.Insert(h.db, input)
+			if err != nil {
+				http.Error(w, "Failed to insert notification", http.StatusInternalServerError)
+				continue
+			}
+
+			dto := notification.Dto{
+				ID:    id,
+				Value: input.Value,
+			}
+
+			readDone <- false
+			messageChan <- dto
 		}
+	}(conn)
 
-		input := notification.CreateNotificationRequest{Value: string(msg)}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			if <-readDone {
+				break
+			}
 
-		id, err := notification.Insert(h.db, input)
-		if err != nil {
-			http.Error(w, "Failed to insert notification", http.StatusInternalServerError)
-			return
+			dto := <-messageChan
+			jsonMsg, err := json.Marshal(dto)
+			if err != nil {
+				http.Error(w, "Failed to marshal notification", http.StatusInternalServerError)
+				continue
+			}
+
+			log.Printf("Received: %s", jsonMsg)
+			broadcast(jsonMsg)
 		}
+	}()
 
-		dto := notification.Dto{
-			ID:    id,
-			Value: input.Value,
-		}
-		jsonMsg, _ := json.Marshal(dto)
-
-		log.Printf("Received: %s", jsonMsg)
-		broadcast(jsonMsg)
-	}
+	//for {
+	//	_, msg, err := conn.ReadMessage()
+	//	if err != nil {
+	//		log.Println("Read error:", err)
+	//		break
+	//	}
+	//
+	//	input := notification.CreateNotificationRequest{Value: string(msg)}
+	//
+	//	id, err := notification.Insert(h.db, input)
+	//	if err != nil {
+	//		http.Error(w, "Failed to insert notification", http.StatusInternalServerError)
+	//		return
+	//	}
+	//
+	//	dto := notification.Dto{
+	//		ID:    id,
+	//		Value: input.Value,
+	//	}
+	//	jsonMsg, _ := json.Marshal(dto)
+	//
+	//	log.Printf("Received: %s", jsonMsg)
+	//	broadcast(jsonMsg)
+	//}
 }
 
 func registerClient(conn *websocket.Conn) {
@@ -75,7 +139,7 @@ func unregisterClient(conn *websocket.Conn) {
 	clientsMu.Lock()
 	defer clientsMu.Unlock()
 	delete(clients, conn)
-	conn.Close()
+	defer conn.Close()
 	log.Println("Client disconnected. Total clients:", len(clients))
 }
 
